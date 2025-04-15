@@ -66,7 +66,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
     }));
   };
 
-  const handleTextAlign = (alignment: string) => {
+  const handleTextAlign = (alignment: "left" | "center" | "right" | "justify") => {
     setStyle(prev => ({
       ...prev,
       textAlign: alignment
