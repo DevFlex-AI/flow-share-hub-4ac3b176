@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/use-toast";
 import { Mail, Lock, Phone, User, ArrowRight, AlertCircle } from "lucide-react";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 export default function Login() {
   const [activeTab, setActiveTab] = useState("email");
@@ -20,14 +22,16 @@ export default function Login() {
   const [verificationId, setVerificationId] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [needsVerification, setNeedsVerification] = useState(false);
   
-  const { login, signUp, loginWithGoogle, loginWithApple, sendPhoneVerification, verifyPhoneCode } = useAuth();
+  const { login, signUp, loginWithGoogle, loginWithApple, sendPhoneVerification, verifyPhoneCode, resetPassword } = useAuth();
   const navigate = useNavigate();
 
   async function handleEmailLogin(e: React.FormEvent) {
     e.preventDefault();
     
-    if (!email || !password) {
+    if (!email || (!password && !isForgotPassword)) {
       toast({
         title: "Error",
         description: "Please fill all fields",
@@ -38,6 +42,16 @@ export default function Login() {
     
     try {
       setLoading(true);
+      
+      if (isForgotPassword) {
+        await resetPassword(email);
+        toast({
+          title: "Success",
+          description: "Password reset email sent. Check your inbox.",
+        });
+        setIsForgotPassword(false);
+        return;
+      }
       
       if (isSignUp) {
         if (!name) {
@@ -50,12 +64,13 @@ export default function Login() {
         }
         
         await signUp(email, password, name);
+        
         toast({
           title: "Success",
           description: "Account created! Please verify your email before logging in.",
         });
         
-        setIsSignUp(false);
+        setNeedsVerification(true);
       } else {
         await login(email, password);
         navigate("/");
@@ -158,11 +173,92 @@ export default function Login() {
     }
   }
 
+  // Render verification screen for email signup
+  if (needsVerification) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-indigo-100 p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Verify Your Email</CardTitle>
+            <CardDescription>
+              We've sent a verification link to your email address. Please check your inbox and click the link to verify your account.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-center text-amber-600">
+              <AlertCircle className="h-12 w-12 mx-auto mb-2" />
+              <p>Please check your email inbox.</p>
+            </div>
+          </CardContent>
+          <CardFooter className="flex flex-col space-y-2">
+            <Button 
+              onClick={() => setNeedsVerification(false)} 
+              variant="outline" 
+              className="w-full"
+            >
+              Back to Login
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+
+  // Render forgot password screen
+  if (isForgotPassword) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-indigo-100 p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Reset Password</CardTitle>
+            <CardDescription>
+              Enter your email address and we'll send you a link to reset your password.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleEmailLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="reset-email">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="reset-email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={loading}
+              >
+                {loading ? "Sending..." : "Send Reset Link"}
+              </Button>
+            </form>
+          </CardContent>
+          <CardFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setIsForgotPassword(false)}
+              className="w-full"
+            >
+              Back to Login
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-indigo-100 p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-social-primary">SocialConnect</h1>
+          <h1 className="text-3xl font-bold text-social-primary">UwuSocial</h1>
           <p className="text-gray-600">Connect with friends and the world around you</p>
         </div>
         
@@ -273,13 +369,19 @@ export default function Login() {
                 ) : (
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="code">Verification Code</Label>
-                      <Input
-                        id="code"
-                        placeholder="Enter the 6-digit code"
-                        value={verificationCode}
-                        onChange={(e) => setVerificationCode(e.target.value)}
-                      />
+                      <Label htmlFor="verification-code">Verification Code</Label>
+                      <div className="flex justify-center py-4">
+                        <InputOTP maxLength={6} value={verificationCode} onChange={setVerificationCode}>
+                          <InputOTPGroup>
+                            <InputOTPSlot index={0} />
+                            <InputOTPSlot index={1} />
+                            <InputOTPSlot index={2} />
+                            <InputOTPSlot index={3} />
+                            <InputOTPSlot index={4} />
+                            <InputOTPSlot index={5} />
+                          </InputOTPGroup>
+                        </InputOTP>
+                      </div>
                     </div>
                     
                     <Button
@@ -356,6 +458,7 @@ export default function Login() {
               <button 
                 className="mt-2 text-sm text-social-primary hover:underline"
                 type="button"
+                onClick={() => setIsForgotPassword(true)}
               >
                 Forgot password?
               </button>

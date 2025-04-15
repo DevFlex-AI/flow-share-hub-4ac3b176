@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import {
   User,
@@ -12,10 +11,14 @@ import {
   updateProfile,
   PhoneAuthProvider,
   signInWithPhoneNumber,
-  RecaptchaVerifier
+  RecaptchaVerifier,
+  deleteUser,
+  EmailAuthProvider,
+  reauthenticateWithCredential
 } from "firebase/auth";
-import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
-import { auth, firestore, googleProvider, facebookProvider, appleProvider } from "@/lib/firebase";
+import { doc, setDoc, getDoc, updateDoc, serverTimestamp, collection, query, where, getDocs, writeBatch } from "firebase/firestore";
+import { ref, deleteObject } from "firebase/storage";
+import { auth, firestore, googleProvider, facebookProvider, appleProvider, storage } from "@/lib/firebase";
 
 interface AuthContextType {
   currentUser: User | null;
@@ -35,6 +38,7 @@ interface AuthContextType {
   isOnline: boolean;
   setIsOnline: (status: boolean) => void;
   updateOnlineStatus: (status: boolean) => Promise<void>;
+  deleteUserData: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -321,6 +325,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }
 
+  async function deleteUserData() {
+    if (!currentUser) return;
+    
+    try {
+      // Get all user documents to delete
+      const userRef = doc(firestore, "users", currentUser.uid);
+      
+      // Delete posts
+      const postsQuery = query(collection(firestore, "posts"), where("userId", "==", currentUser.uid));
+      const postsSnapshot = await getDocs(postsQuery);
+      
+      const batch = writeBatch(firestore);
+      
+      // Add posts to batch delete
+      postsSnapshot.docs.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+      
+      // Delete user document
+      batch.delete(userRef);
+      
+      // Commit the batch
+      await batch.commit();
+      
+      // Storage cleanup
+      const storageRef = ref(storage, `users/${currentUser.uid}`);
+      // This would need recursive delete in a real implementation
+      // For simple cases like profile picture:
+      const profilePicRef = ref(storage, `users/${currentUser.uid}/profile.jpg`);
+      
+      try {
+        await deleteObject(profilePicRef);
+      } catch (error) {
+        // Profile pic might not exist, so ignore error
+      }
+      
+    } catch (error) {
+      console.error("Error deleting user data:", error);
+      throw error;
+    }
+  }
+
   const value = {
     currentUser,
     userProfile,
@@ -338,7 +384,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     verifyPhoneCode,
     isOnline,
     setIsOnline,
-    updateOnlineStatus
+    updateOnlineStatus,
+    deleteUserData
   };
 
   return (

@@ -18,6 +18,7 @@ import LocationShare from "./pages/LocationShare";
 import GenerateImage from "./pages/GenerateImage";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import AdminDashboard from "./pages/AdminDashboard";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,21 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   
   if (!currentUser) {
     return <Navigate to="/login" replace />;
+  }
+  
+  return <>{children}</>;
+}
+
+// Admin route component
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { currentUser, loading, userProfile } = useAuth();
+  
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+  
+  if (!currentUser || !userProfile?.isAdmin) {
+    return <Navigate to="/" replace />;
   }
   
   return <>{children}</>;
@@ -85,6 +101,12 @@ function AppRoutes() {
           <ProtectedRoute>
             <GenerateImage />
           </ProtectedRoute>
+        } />
+        
+        <Route path="/admin" element={
+          <AdminRoute>
+            <AdminDashboard />
+          </AdminRoute>
         } />
         
         {/* Public Routes */}
