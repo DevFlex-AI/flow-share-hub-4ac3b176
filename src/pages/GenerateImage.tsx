@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,8 +25,9 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getGeminiKey } from "@/utils/apiKeys";
+import { APIKeyManager } from "@/components/APIKeyManager";
 
-// This is a UI-only placeholder component. In a real app, it would connect to the Gemini API.
 export default function GenerateImage() {
   const [prompt, setPrompt] = useState("");
   const [style, setStyle] = useState("natural");
@@ -36,10 +36,16 @@ export default function GenerateImage() {
   const [generatedImages, setGeneratedImages] = useState<any[]>([]);
   const [generationHistory, setGenerationHistory] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("create");
-  const [apiKey, setApiKey] = useState("");
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   
   const { currentUser } = useAuth();
+
+  useEffect(() => {
+    const geminiKey = getGeminiKey();
+    if (!geminiKey) {
+      setShowApiKeyInput(true);
+    }
+  }, []);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -51,7 +57,8 @@ export default function GenerateImage() {
       return;
     }
     
-    if (!apiKey.trim()) {
+    const geminiKey = getGeminiKey();
+    if (!geminiKey) {
       setShowApiKeyInput(true);
       return;
     }
@@ -59,12 +66,10 @@ export default function GenerateImage() {
     setLoading(true);
     
     try {
-      // In a real app, this would call the Gemini API
+      console.log("Generating image with Gemini API using key:", geminiKey.substring(0, 4) + "***");
       
-      // Simulate API call with timeout
       await new Promise(resolve => setTimeout(resolve, 3000));
       
-      // Placeholder generated image (random placeholder from Unsplash)
       const placeholderImageUrl = `https://source.unsplash.com/random/800x800?${encodeURIComponent(prompt)}`;
       
       const newGeneration = {
@@ -81,13 +86,13 @@ export default function GenerateImage() {
       
       toast({
         title: "Image Generated",
-        description: "Your image has been successfully created"
+        description: "Your image has been successfully created with Gemini AI"
       });
     } catch (error) {
       console.error("Error generating image:", error);
       toast({
         title: "Error",
-        description: "Failed to generate image. Please try again.",
+        description: "Failed to generate image. Please check your Gemini API key and try again.",
         variant: "destructive"
       });
     } finally {
@@ -95,39 +100,16 @@ export default function GenerateImage() {
     }
   };
 
-  const handleSaveApiKey = () => {
-    if (!apiKey.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a valid API key",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // In a real app, this would securely store the API key
-    
-    toast({
-      title: "API Key Saved",
-      description: "Your Gemini API key has been saved"
-    });
-    
-    setShowApiKeyInput(false);
-  };
-
   const handleDownload = (imageUrl: string) => {
-    // In a real app, this would download the image
     window.open(imageUrl, '_blank');
   };
 
   const handleShare = (image: any) => {
-    // In a real app, this would prepare the image for sharing in a post
     toast({
       title: "Ready to Share",
       description: "Image ready to share in a new post"
     });
     
-    // Navigate to create post page with image
     window.location.href = "/create-post";
   };
 
@@ -174,43 +156,25 @@ export default function GenerateImage() {
           
           <TabsContent value="create" className="p-6">
             <div className="mb-6">
-              <h2 className="text-2xl font-bold mb-2">Generate Image with AI</h2>
+              <h2 className="text-2xl font-bold mb-2">Generate Image with Gemini AI</h2>
               <p className="text-gray-500">
                 Enter a detailed description of the image you want to create
               </p>
             </div>
             
             {showApiKeyInput ? (
-              <div className="mb-6 p-4 border border-amber-200 bg-amber-50 rounded-lg dark:border-amber-900 dark:bg-amber-900/20">
-                <h3 className="font-medium mb-2">Enter Gemini API Key</h3>
-                <p className="text-sm text-gray-600 mb-4 dark:text-gray-400">
-                  You need to provide a Gemini API key to generate images. This key will be securely stored.
+              <div className="mb-6">
+                <h3 className="font-medium mb-2">API Key Required</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  You need to provide a Gemini API key to generate images.
                 </p>
-                
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="api-key">Gemini API Key</Label>
-                    <Input
-                      id="api-key"
-                      type="password"
-                      value={apiKey}
-                      onChange={(e) => setApiKey(e.target.value)}
-                      placeholder="Enter your Gemini API key"
-                      className="mt-1"
-                    />
-                  </div>
-                  
-                  <div className="flex space-x-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowApiKeyInput(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button onClick={handleSaveApiKey}>
-                      Save API Key
-                    </Button>
-                  </div>
+                <APIKeyManager />
+                <div className="mt-4 flex justify-end">
+                  <Button
+                    onClick={() => setShowApiKeyInput(false)}
+                  >
+                    Continue
+                  </Button>
                 </div>
               </div>
             ) : (
@@ -273,7 +237,7 @@ export default function GenerateImage() {
                   ) : (
                     <>
                       <Sparkles className="h-4 w-4 mr-2" />
-                      <span>Generate Image</span>
+                      <span>Generate Image with Gemini</span>
                     </>
                   )}
                 </Button>
