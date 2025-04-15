@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -222,7 +223,6 @@ export default function CreatePost() {
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               className="flex-1"
-              prefix={<MapPin className="h-4 w-4 text-gray-400" />}
             />
           </div>
           
