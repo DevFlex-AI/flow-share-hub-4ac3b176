@@ -6,7 +6,7 @@ import {
   MessageSquare, Users, RefreshCw, Smile
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MobileVideoCallUIProps {
   callerName: string;
@@ -23,7 +23,7 @@ export const MobileVideoCallUI: React.FC<MobileVideoCallUIProps> = ({
   const [isCameraOff, setIsCameraOff] = useState(false);
   const [showMemoji, setShowMemoji] = useState(false);
   const [selectedMemoji, setSelectedMemoji] = useState<string | null>(null);
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
 
   const memojiOptions = [
     "😀", "😎", "🤩", "🦄", "🐶", "🦊", "🐱", "🤖", "👽", "👾"
