@@ -49,6 +49,16 @@
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Updating social media colors to cyberpunk theme */
+    --social-primary: 139 92 246; /* Vivid Purple */
+    --social-secondary: 249 115 22; /* Bright Orange */
+    --social-accent: 14 165 233; /* Ocean Blue */
+    --social-success: 30 174 219; /* Bright Blue */
+    --social-warning: 34 31 38; /* Dark Charcoal */
+    --social-danger: 34 34 34; /* Dark Gray */
+    --social-light: 255 255 255;
+    --social-dark: 0 0 0;
   }
 
   .dark {

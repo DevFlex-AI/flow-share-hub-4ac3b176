@@ -255,11 +255,11 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-social-warning to-social-dark p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-social-primary">UwuSocial</h1>
-          <p className="text-gray-600">Connect with friends and the world around you</p>
+          <h1 className="text-3xl font-bold text-social-accent">VortexSocial</h1>
+          <p className="text-social-light/80">Connect with friends and the world around you</p>
         </div>
         
         <Card className="w-full">

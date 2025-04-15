@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -63,16 +62,15 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Social media app colors
 				social: {
-					primary: '#4F46E5', // Indigo
-					secondary: '#EC4899', // Pink
-					accent: '#06B6D4', // Cyan
-					success: '#10B981', // Emerald
-					warning: '#F59E0B', // Amber
-					danger: '#EF4444', // Red
-					light: '#F3F4F6', // Gray-100
-					dark: '#1F2937', // Gray-800
+					primary: 'rgb(var(--social-primary))',
+					secondary: 'rgb(var(--social-secondary))',
+					accent: 'rgb(var(--social-accent))',
+					success: 'rgb(var(--social-success))',
+					warning: 'rgb(var(--social-warning))',
+					danger: 'rgb(var(--social-danger))',
+					light: 'rgb(var(--social-light))',
+					dark: 'rgb(var(--social-dark))'
 				}
 			},
 			borderRadius: {
