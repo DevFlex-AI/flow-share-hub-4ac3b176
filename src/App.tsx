@@ -19,6 +19,9 @@ import GenerateImage from "./pages/GenerateImage";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import AdminDashboard from "./pages/AdminDashboard";
+import PDFEditor from "./pages/PDFEditor";
+import Explore from "./pages/Explore";
+import Friends from "./pages/Friends";
 
 const queryClient = new QueryClient();
 
@@ -27,7 +30,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { currentUser, loading } = useAuth();
   
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
   }
   
   if (!currentUser) {
@@ -42,7 +49,11 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   const { currentUser, loading, userProfile } = useAuth();
   
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
   }
   
   if (!currentUser || !userProfile?.isAdmin) {
@@ -79,6 +90,18 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
         
+        <Route path="/explore" element={
+          <ProtectedRoute>
+            <Explore />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/friends" element={
+          <ProtectedRoute>
+            <Friends />
+          </ProtectedRoute>
+        } />
+        
         <Route path="/create-post" element={
           <ProtectedRoute>
             <CreatePost />
@@ -103,6 +126,12 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
         
+        <Route path="/pdf-editor" element={
+          <ProtectedRoute>
+            <PDFEditor />
+          </ProtectedRoute>
+        } />
+        
         <Route path="/admin" element={
           <AdminRoute>
             <AdminDashboard />
@@ -123,7 +152,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
-      <Sonner />
+      <Sonner position="top-right" closeButton theme="light" richColors />
       <BrowserRouter>
         <AuthProvider>
           <AppRoutes />

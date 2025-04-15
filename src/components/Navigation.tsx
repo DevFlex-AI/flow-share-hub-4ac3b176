@@ -16,7 +16,9 @@ import {
   Settings,
   Video,
   Map,
-  Image
+  Image,
+  FileText,
+  Phone
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -28,7 +30,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export default function Navigation() {
@@ -40,23 +42,21 @@ export default function Navigation() {
     { path: "/", icon: Home, label: "Home" },
     { path: "/explore", icon: Search, label: "Explore" },
     { path: "/messages", icon: MessageCircle, label: "Messages" },
-    { path: "/notifications", icon: Bell, label: "Notifications" },
     { path: "/friends", icon: Users, label: "Friends" },
+    { path: "/notifications", icon: Bell, label: "Notifications" },
   ];
   
   const handleLogout = async () => {
     try {
       await logout();
       navigate("/login");
-      toast({
-        title: "Logged out",
-        description: "You have been successfully logged out",
+      toast.success("Successfully logged out", {
+        description: "You have been signed out of your account",
+        icon: "👋"
       });
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive"
+      toast.error("Logout failed", {
+        description: error.message
       });
     }
   };
@@ -69,18 +69,31 @@ export default function Navigation() {
     return name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : "U";
   };
 
+  // Group dropdown items for better organization
+  const creationItems = [
+    { path: "/create-post", icon: PlusSquare, label: "Create Post" },
+    { path: "/generate-image", icon: Image, label: "Generate Image" },
+    { path: "/pdf-editor", icon: FileText, label: "PDF Editor" },
+  ];
+  
+  const communicationItems = [
+    { path: "/video-call", icon: Video, label: "Video Call" },
+    { path: "/location-share", icon: Map, label: "Location Sharing" },
+    { path: "/call", icon: Phone, label: "Voice Call" },
+  ];
+
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 md:top-0 md:bottom-auto md:border-b md:border-t-0 dark:bg-gray-900 dark:border-gray-800">
       <div className="container flex items-center justify-between h-16 px-4 mx-auto">
         <div className="hidden md:flex items-center space-x-1">
           <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded-full bg-social-primary flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M18 16.016v-8.032a1.984 1.984 0 0 0-1.984-1.984H7.984A1.984 1.984 0 0 0 6 7.984v8.032a1.984 1.984 0 0 0 1.984 1.984h8.032A1.984 1.984 0 0 0 18 16.016Z" />
                 <path d="M18 7.984 6 16.016" />
               </svg>
             </div>
-            <span className="text-xl font-bold">SocialConnect</span>
+            <span className="text-xl font-bold">VortexSocial</span>
           </Link>
         </div>
         
@@ -93,8 +106,8 @@ export default function Navigation() {
                 className={cn(
                   "flex flex-col items-center justify-center p-2 md:px-3 md:py-2 md:flex-row md:space-x-2 rounded-lg transition-colors",
                   location.pathname === item.path
-                    ? "text-social-primary"
-                    : "text-gray-500 hover:text-social-primary hover:bg-gray-100 dark:hover:bg-gray-800"
+                    ? "text-primary bg-primary-foreground/10"
+                    : "text-gray-500 hover:text-primary hover:bg-gray-100 dark:hover:bg-gray-800"
                 )}
               >
                 <item.icon className="w-6 h-6 md:w-5 md:h-5" />
@@ -105,15 +118,29 @@ export default function Navigation() {
         </div>
         
         <div className="flex items-center space-x-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => navigate("/create-post")}
-            className="hidden md:flex"
-          >
-            <PlusSquare className="w-5 h-5" />
-          </Button>
+          {/* Create Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                className="hidden md:flex"
+              >
+                <PlusSquare className="w-5 h-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Create</DropdownMenuLabel>
+              {creationItems.map((item) => (
+                <DropdownMenuItem key={item.path} onClick={() => navigate(item.path)}>
+                  <item.icon className="w-4 h-4 mr-2" />
+                  <span>{item.label}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
           
+          {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative rounded-full" size="icon">
@@ -127,7 +154,7 @@ export default function Navigation() {
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="end" className="w-64">
               <DropdownMenuLabel>
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">{userProfile?.displayName || currentUser.displayName}</p>
@@ -135,37 +162,56 @@ export default function Navigation() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+              
+              {/* User Profile */}
               <DropdownMenuGroup>
                 <DropdownMenuItem onClick={() => navigate(`/profile/${currentUser.uid}`)}>
                   <UserIcon className="w-4 h-4 mr-2" />
                   <span>Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/create-post")}>
-                  <PlusSquare className="w-4 h-4 mr-2" />
-                  <span>Create Post</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/video-call")}>
-                  <Video className="w-4 h-4 mr-2" />
-                  <span>Video Call</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/location-share")}>
-                  <Map className="w-4 h-4 mr-2" />
-                  <span>Location Sharing</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/generate-image")}>
-                  <Image className="w-4 h-4 mr-2" />
-                  <span>Generate Image</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/settings")}>
-                  <Settings className="w-4 h-4 mr-2" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Moon className="w-4 h-4 mr-2" />
-                  <span>Dark Mode</span>
-                </DropdownMenuItem>
               </DropdownMenuGroup>
+              
               <DropdownMenuSeparator />
+              
+              {/* Content Creation */}
+              <DropdownMenuLabel>Create</DropdownMenuLabel>
+              <DropdownMenuGroup>
+                {creationItems.map((item) => (
+                  <DropdownMenuItem key={item.path} onClick={() => navigate(item.path)}>
+                    <item.icon className="w-4 h-4 mr-2" />
+                    <span>{item.label}</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuGroup>
+              
+              <DropdownMenuSeparator />
+              
+              {/* Communication */}
+              <DropdownMenuLabel>Connect</DropdownMenuLabel>
+              <DropdownMenuGroup>
+                {communicationItems.map((item) => (
+                  <DropdownMenuItem key={item.path} onClick={() => navigate(item.path)}>
+                    <item.icon className="w-4 h-4 mr-2" />
+                    <span>{item.label}</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuGroup>
+              
+              <DropdownMenuSeparator />
+              
+              {/* Settings */}
+              <DropdownMenuItem onClick={() => navigate("/settings")}>
+                <Settings className="w-4 h-4 mr-2" />
+                <span>Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Moon className="w-4 h-4 mr-2" />
+                <span>Dark Mode</span>
+              </DropdownMenuItem>
+              
+              <DropdownMenuSeparator />
+              
+              {/* Logout */}
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="w-4 h-4 mr-2" />
                 <span>Logout</span>
