@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { firestore } from "@/lib/firebase";
@@ -24,6 +23,7 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post, onDelete }: PostCardProps) {
+  const { currentUser } = useAuth();
   const [liked, setLiked] = useState(post.likes?.includes(currentUser?.uid));
   const [likeCount, setLikeCount] = useState(post.likeCount || 0);
   const [bookmarked, setBookmarked] = useState(false);
@@ -31,7 +31,6 @@ export default function PostCard({ post, onDelete }: PostCardProps) {
   const [comments, setComments] = useState<any[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
   const [commentText, setCommentText] = useState("");
-  const { currentUser } = useAuth();
 
   const handleLike = async () => {
     if (!currentUser) return;
@@ -56,7 +55,6 @@ export default function PostCard({ post, onDelete }: PostCardProps) {
       }
     } catch (error) {
       console.error("Error updating like status:", error);
-      // Revert UI state if operation fails
       setLiked(!newLiked);
       setLikeCount(prev => !newLiked ? prev + 1 : prev - 1);
       toast({

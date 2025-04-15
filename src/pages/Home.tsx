@@ -46,14 +46,23 @@ export default function Home() {
             snapshot.docs.map(async (postDoc) => {
               const postData = { id: postDoc.id, ...postDoc.data() };
               
-              // Fetch user data
-              const userDoc = await getDoc(doc(firestore, "users", postData.userId));
-              const userData = userDoc.exists() ? userDoc.data() : null;
-              
-              return {
-                ...postData,
-                user: userData
-              };
+              // Ensure userId exists before trying to fetch user data
+              if (postData.userId) {
+                // Fetch user data
+                const userDoc = await getDoc(doc(firestore, "users", postData.userId));
+                const userData = userDoc.exists() ? userDoc.data() : null;
+                
+                return {
+                  ...postData,
+                  user: userData
+                };
+              } else {
+                // If no userId, return post without user data
+                return {
+                  ...postData,
+                  user: null
+                };
+              }
             })
           );
           
@@ -101,14 +110,23 @@ export default function Home() {
         snapshot.docs.map(async (postDoc) => {
           const postData = { id: postDoc.id, ...postDoc.data() };
           
-          // Fetch user data
-          const userDoc = await getDoc(doc(firestore, "users", postData.userId));
-          const userData = userDoc.exists() ? userDoc.data() : null;
-          
-          return {
-            ...postData,
-            user: userData
-          };
+          // Ensure userId exists before trying to fetch user data
+          if (postData.userId) {
+            // Fetch user data
+            const userDoc = await getDoc(doc(firestore, "users", postData.userId));
+            const userData = userDoc.exists() ? userDoc.data() : null;
+            
+            return {
+              ...postData,
+              user: userData
+            };
+          } else {
+            // If no userId, return post without user data
+            return {
+              ...postData,
+              user: null
+            };
+          }
         })
       );
       
@@ -148,14 +166,23 @@ export default function Home() {
         snapshot.docs.map(async (postDoc) => {
           const postData = { id: postDoc.id, ...postDoc.data() };
           
-          // Fetch user data
-          const userDoc = await getDoc(doc(firestore, "users", postData.userId));
-          const userData = userDoc.exists() ? userDoc.data() : null;
-          
-          return {
-            ...postData,
-            user: userData
-          };
+          // Ensure userId exists before trying to fetch user data
+          if (postData.userId) {
+            // Fetch user data
+            const userDoc = await getDoc(doc(firestore, "users", postData.userId));
+            const userData = userDoc.exists() ? userDoc.data() : null;
+            
+            return {
+              ...postData,
+              user: userData
+            };
+          } else {
+            // If no userId, return post without user data
+            return {
+              ...postData,
+              user: null
+            };
+          }
         })
       );
       
