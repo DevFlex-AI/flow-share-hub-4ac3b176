@@ -43,7 +43,13 @@ export default function Navigation() {
     { path: "/explore", icon: Search, label: "Explore" },
     { path: "/messages", icon: MessageCircle, label: "Messages" },
     { path: "/friends", icon: Users, label: "Friends" },
-    { path: "/notifications", icon: Bell, label: "Notifications" },
+  ];
+  
+  // Added quick access feature items for better visibility
+  const featuredItems = [
+    { path: "/pdf-editor", icon: FileText, label: "PDF Editor" },
+    { path: "/generate-image", icon: Image, label: "Generate Image" },
+    { path: "/call", icon: Phone, label: "Call" },
   ];
   
   const handleLogout = async () => {
@@ -79,7 +85,7 @@ export default function Navigation() {
   const communicationItems = [
     { path: "/video-call", icon: Video, label: "Video Call" },
     { path: "/location-share", icon: Map, label: "Location Sharing" },
-    { path: "/call", icon: Phone, label: "Voice Call" },
+    { path: "/call", icon: Phone, label: "Call" },
   ];
 
   return (
@@ -117,6 +123,22 @@ export default function Navigation() {
           </nav>
         </div>
         
+        {/* Featured items navigation */}
+        <div className="hidden md:flex items-center space-x-2 mr-4">
+          {featuredItems.map((item) => (
+            <Button
+              key={item.path}
+              variant={location.pathname === item.path ? "default" : "outline"}
+              size="sm"
+              onClick={() => navigate(item.path)}
+              className="flex items-center gap-1"
+            >
+              <item.icon className="h-4 w-4" />
+              <span>{item.label}</span>
+            </Button>
+          ))}
+        </div>
+        
         <div className="flex items-center space-x-2">
           {/* Create Menu */}
           <DropdownMenu>
@@ -140,6 +162,21 @@ export default function Navigation() {
             </DropdownMenuContent>
           </DropdownMenu>
           
+          {/* Notifications Button - for better usability */}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="relative hidden md:flex"
+            onClick={() => {
+              toast.info("Notifications", {
+                description: "You have no new notifications",
+                icon: "🔔"
+              });
+            }}
+          >
+            <Bell className="w-5 h-5" />
+          </Button>
+          
           {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -158,7 +195,7 @@ export default function Navigation() {
               <DropdownMenuLabel>
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">{userProfile?.displayName || currentUser.displayName}</p>
-                  <p className="text-xs leading-none text-muted-foreground">{currentUser.email}</p>
+                  <p className="text-xs leading-none text-muted-foreground">{currentUser.email || currentUser.phoneNumber}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -218,6 +255,29 @@ export default function Navigation() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+        </div>
+      </div>
+      
+      {/* Mobile Quick Actions Bar (featuring PDF Editor and other tools) */}
+      <div className="md:hidden border-t border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-800 py-2 px-4">
+        <div className="flex items-center justify-between">
+          {featuredItems.map((item) => (
+            <Button
+              key={item.path}
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(item.path)}
+              className={cn(
+                "flex flex-col items-center justify-center p-1 rounded-lg transition-colors flex-1",
+                location.pathname === item.path
+                  ? "text-primary bg-primary-foreground/10"
+                  : "text-gray-500 hover:text-primary hover:bg-gray-100 dark:hover:bg-gray-800"
+              )}
+            >
+              <item.icon className="h-5 w-5 mb-1" />
+              <span className="text-xs">{item.label}</span>
+            </Button>
+          ))}
         </div>
       </div>
     </div>

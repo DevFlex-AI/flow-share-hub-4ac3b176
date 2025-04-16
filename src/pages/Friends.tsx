@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { collection, getDocs, query, where, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { collection, query, where, doc, updateDoc, arrayUnion, arrayRemove, getDoc, onSnapshot } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,12 +9,16 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserPlus, UserCheck, UserX, Users, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
 
 type FriendType = {
   id: string;
   displayName: string;
   photoURL: string;
   username?: string;
+  email?: string;
+  phoneNumber?: string;
+  isOnline?: boolean;
 };
 
 const Friends = () => {
@@ -25,45 +29,111 @@ const Friends = () => {
   const { currentUser } = useAuth();
 
   useEffect(() => {
-    const fetchFriendsData = async () => {
-      if (!currentUser) return;
+    if (!currentUser) return;
+    
+    const userRef = doc(firestore, 'users', currentUser.uid);
+    
+    // Listen for current user's data to get references to friendships
+    const unsubUser = onSnapshot(userRef, async (snapshot) => {
+      if (!snapshot.exists()) return;
       
-      try {
-        setLoading(true);
+      const userData = snapshot.data();
+      
+      // Fetch friends
+      if (userData.friends && userData.friends.length > 0) {
+        const friendsQuery = query(
+          collection(firestore, 'users'),
+          where('id', 'in', userData.friends)
+        );
         
-        // In a real app, you would have a more complex data structure
-        // For demonstration, we'll simulate friend connections
-        const usersRef = collection(firestore, 'users');
-        const querySnapshot = await getDocs(query(usersRef, where('id', '!=', currentUser.uid)));
-        
-        // Simulate different relationship statuses
-        const allUsers = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as FriendType[];
-        
-        // For demo purposes, randomly assign users to different categories
-        const mockFriends = allUsers.slice(0, 3);
-        const mockRequests = allUsers.slice(3, 6);
-        const mockSent = allUsers.slice(6, 9);
-        
-        setFriends(mockFriends);
-        setRequests(mockRequests);
-        setSent(mockSent);
-      } catch (error) {
-        console.error('Error fetching friends data:', error);
-        toast.error('Failed to load friends data');
-      } finally {
-        setLoading(false);
+        const friendsSnapshot = await getDoc(userRef);
+        if (friendsSnapshot.exists()) {
+          const data = friendsSnapshot.data();
+          
+          // This would be replaced with actual friends data in a real app
+          if (data.friends) {
+            const friendIds = data.friends;
+            const friendsDocs = await Promise.all(
+              friendIds.map((id: string) => getDoc(doc(firestore, 'users', id)))
+            );
+            
+            const friendsData = friendsDocs
+              .filter(doc => doc.exists())
+              .map(doc => ({ id: doc.id, ...doc.data() })) as FriendType[];
+              
+            setFriends(friendsData);
+          }
+        }
+      } else {
+        setFriends([]);
       }
+      
+      // Fetch friend requests
+      if (userData.friendRequests && userData.friendRequests.length > 0) {
+        const requestsPromises = userData.friendRequests.map((id: string) => 
+          getDoc(doc(firestore, 'users', id))
+        );
+        
+        const requestsDocs = await Promise.all(requestsPromises);
+        const requestsData = requestsDocs
+          .filter(doc => doc.exists())
+          .map(doc => ({ id: doc.id, ...doc.data() })) as FriendType[];
+          
+        setRequests(requestsData);
+      } else {
+        setRequests([]);
+      }
+      
+      // Fetch sent requests
+      if (userData.sentRequests && userData.sentRequests.length > 0) {
+        const sentPromises = userData.sentRequests.map((id: string) => 
+          getDoc(doc(firestore, 'users', id))
+        );
+        
+        const sentDocs = await Promise.all(sentPromises);
+        const sentData = sentDocs
+          .filter(doc => doc.exists())
+          .map(doc => ({ id: doc.id, ...doc.data() })) as FriendType[];
+          
+        setSent(sentData);
+      } else {
+        setSent([]);
+      }
+      
+      setLoading(false);
+    }, (error) => {
+      console.error('Error with friends listener:', error);
+      toast.error('Connection issue', {
+        description: 'Real-time updates interrupted. Try refreshing the page.',
+        icon: '🔄'
+      });
+      setLoading(false);
+    });
+    
+    return () => {
+      unsubUser();
     };
-
-    fetchFriendsData();
   }, [currentUser]);
 
   const acceptRequest = async (friend: FriendType) => {
+    if (!currentUser) return;
+    
     try {
-      // In a real app, update the friendship status in Firestore
+      // Update current user's friends list
+      const userRef = doc(firestore, 'users', currentUser.uid);
+      await updateDoc(userRef, {
+        friends: arrayUnion(friend.id),
+        friendRequests: arrayRemove(friend.id)
+      });
+      
+      // Update the requester's friends list
+      const friendRef = doc(firestore, 'users', friend.id);
+      await updateDoc(friendRef, {
+        friends: arrayUnion(currentUser.uid),
+        sentRequests: arrayRemove(currentUser.uid)
+      });
+      
+      // Update local state
       setRequests(prev => prev.filter(req => req.id !== friend.id));
       setFriends(prev => [...prev, friend]);
       
@@ -73,51 +143,119 @@ const Friends = () => {
       });
     } catch (error) {
       console.error('Error accepting friend request:', error);
-      toast.error('Failed to accept friend request');
+      toast.error('Failed to accept friend request', {
+        description: 'Please try again',
+        icon: '⚠️'
+      });
     }
   };
 
   const declineRequest = async (friend: FriendType) => {
+    if (!currentUser) return;
+    
     try {
+      // Remove from current user's requests
+      const userRef = doc(firestore, 'users', currentUser.uid);
+      await updateDoc(userRef, {
+        friendRequests: arrayRemove(friend.id)
+      });
+      
+      // Remove from sender's sent requests
+      const friendRef = doc(firestore, 'users', friend.id);
+      await updateDoc(friendRef, {
+        sentRequests: arrayRemove(currentUser.uid)
+      });
+      
+      // Update local state
       setRequests(prev => prev.filter(req => req.id !== friend.id));
       
-      toast("Friend request declined", {
-        description: `You declined ${friend.displayName}'s friend request`
+      toast.info("Friend request declined", {
+        description: `You declined ${friend.displayName}'s friend request`,
+        icon: "👋"
       });
     } catch (error) {
       console.error('Error declining friend request:', error);
-      toast.error('Failed to decline friend request');
+      toast.error('Failed to decline friend request', {
+        description: 'Please try again',
+        icon: '⚠️'
+      });
     }
   };
 
   const cancelRequest = async (friend: FriendType) => {
+    if (!currentUser) return;
+    
     try {
+      // Remove from current user's sent requests
+      const userRef = doc(firestore, 'users', currentUser.uid);
+      await updateDoc(userRef, {
+        sentRequests: arrayRemove(friend.id)
+      });
+      
+      // Remove from recipient's friend requests
+      const friendRef = doc(firestore, 'users', friend.id);
+      await updateDoc(friendRef, {
+        friendRequests: arrayRemove(currentUser.uid)
+      });
+      
+      // Update local state
       setSent(prev => prev.filter(req => req.id !== friend.id));
       
-      toast("Request canceled", {
-        description: `You canceled your friend request to ${friend.displayName}`
+      toast.info("Request canceled", {
+        description: `You canceled your friend request to ${friend.displayName}`,
+        icon: "✖️"
       });
     } catch (error) {
       console.error('Error canceling friend request:', error);
-      toast.error('Failed to cancel friend request');
+      toast.error('Failed to cancel friend request', {
+        description: 'Please try again',
+        icon: '⚠️'
+      });
     }
   };
 
   const removeFriend = async (friend: FriendType) => {
+    if (!currentUser) return;
+    
     try {
+      // Remove from current user's friends
+      const userRef = doc(firestore, 'users', currentUser.uid);
+      await updateDoc(userRef, {
+        friends: arrayRemove(friend.id)
+      });
+      
+      // Remove from friend's friends list
+      const friendRef = doc(firestore, 'users', friend.id);
+      await updateDoc(friendRef, {
+        friends: arrayRemove(currentUser.uid)
+      });
+      
+      // Update local state
       setFriends(prev => prev.filter(f => f.id !== friend.id));
       
-      toast("Friend removed", {
-        description: `You are no longer friends with ${friend.displayName}`
+      toast.info("Friend removed", {
+        description: `You are no longer friends with ${friend.displayName}`,
+        icon: "👋"
       });
     } catch (error) {
       console.error('Error removing friend:', error);
-      toast.error('Failed to remove friend');
+      toast.error('Failed to remove friend', {
+        description: 'Please try again',
+        icon: '⚠️'
+      });
     }
   };
 
+  const sendMessage = (friend: FriendType) => {
+    // In a real app, this would redirect to messages with this friend
+    toast.success(`Message sent to ${friend.displayName}`, {
+      description: "Check your messages for their response",
+      icon: "💬"
+    });
+  };
+
   const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+    return name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : "U";
   };
 
   if (!currentUser) {
@@ -140,15 +278,20 @@ const Friends = () => {
             <TabsList className="mb-6">
               <TabsTrigger value="friends">
                 <UserCheck className="h-4 w-4 mr-2" />
-                Friends
+                Friends {friends.length > 0 && `(${friends.length})`}
               </TabsTrigger>
-              <TabsTrigger value="requests">
+              <TabsTrigger value="requests" className="relative">
                 <UserPlus className="h-4 w-4 mr-2" />
-                Requests {requests.length > 0 && `(${requests.length})`}
+                Requests 
+                {requests.length > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
+                    {requests.length}
+                  </span>
+                )}
               </TabsTrigger>
               <TabsTrigger value="sent">
                 <Clock className="h-4 w-4 mr-2" />
-                Sent
+                Sent {sent.length > 0 && `(${sent.length})`}
               </TabsTrigger>
             </TabsList>
             
@@ -159,27 +302,37 @@ const Friends = () => {
                 </div>
               ) : friends.length > 0 ? (
                 friends.map(friend => (
-                  <div key={friend.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div key={friend.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/20 transition-colors">
                     <div className="flex items-center gap-3">
-                      <Avatar>
+                      <Avatar className="relative">
                         <AvatarImage src={friend.photoURL} />
                         <AvatarFallback>{getInitials(friend.displayName)}</AvatarFallback>
+                        {friend.isOnline && (
+                          <span className="absolute bottom-0 right-0 block w-2.5 h-2.5 bg-green-500 rounded-full ring-1 ring-white"></span>
+                        )}
                       </Avatar>
                       <div>
-                        <p className="font-medium">{friend.displayName}</p>
+                        <Link to={`/profile/${friend.id}`} className="font-medium hover:underline">
+                          {friend.displayName}
+                        </Link>
                         {friend.username && <p className="text-sm text-muted-foreground">@{friend.username}</p>}
+                        {friend.isOnline ? (
+                          <p className="text-xs text-green-500">Online</p>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">Offline</p>
+                        )}
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => {
-                        toast("Message sent!", {
-                          description: `Your message has been sent to ${friend.displayName}`,
-                          icon: "💬"
-                        });
-                      }}>
+                      <Button size="sm" variant="outline" onClick={() => sendMessage(friend)}>
                         Message
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => removeFriend(friend)}>
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => removeFriend(friend)}
+                      >
                         <UserX className="h-4 w-4" />
                       </Button>
                     </div>
@@ -189,7 +342,10 @@ const Friends = () => {
                 <div className="py-10 text-center">
                   <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                   <h3 className="text-lg font-medium">No friends yet</h3>
-                  <p className="text-muted-foreground">Start connecting with people to add friends</p>
+                  <p className="text-muted-foreground mb-4">Start connecting with people to add friends</p>
+                  <Button onClick={() => window.location.href = '/explore'}>
+                    Find Friends
+                  </Button>
                 </div>
               )}
             </TabsContent>
@@ -201,14 +357,16 @@ const Friends = () => {
                 </div>
               ) : requests.length > 0 ? (
                 requests.map(request => (
-                  <div key={request.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div key={request.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/20 transition-colors">
                     <div className="flex items-center gap-3">
                       <Avatar>
                         <AvatarImage src={request.photoURL} />
                         <AvatarFallback>{getInitials(request.displayName)}</AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-medium">{request.displayName}</p>
+                        <Link to={`/profile/${request.id}`} className="font-medium hover:underline">
+                          {request.displayName}
+                        </Link>
                         {request.username && <p className="text-sm text-muted-foreground">@{request.username}</p>}
                       </div>
                     </div>
@@ -238,19 +396,26 @@ const Friends = () => {
                 </div>
               ) : sent.length > 0 ? (
                 sent.map(request => (
-                  <div key={request.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div key={request.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/20 transition-colors">
                     <div className="flex items-center gap-3">
                       <Avatar>
                         <AvatarImage src={request.photoURL} />
                         <AvatarFallback>{getInitials(request.displayName)}</AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-medium">{request.displayName}</p>
+                        <Link to={`/profile/${request.id}`} className="font-medium hover:underline">
+                          {request.displayName}
+                        </Link>
                         {request.username && <p className="text-sm text-muted-foreground">@{request.username}</p>}
                       </div>
                     </div>
                     <div>
-                      <Button size="sm" variant="outline" onClick={() => cancelRequest(request)}>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => cancelRequest(request)}
+                      >
                         Cancel
                       </Button>
                     </div>
@@ -260,7 +425,10 @@ const Friends = () => {
                 <div className="py-10 text-center">
                   <Clock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                   <h3 className="text-lg font-medium">No sent requests</h3>
-                  <p className="text-muted-foreground">When you send friend requests, they will appear here</p>
+                  <p className="text-muted-foreground mb-4">When you send friend requests, they will appear here</p>
+                  <Button onClick={() => window.location.href = '/explore'}>
+                    Find Friends
+                  </Button>
                 </div>
               )}
             </TabsContent>

@@ -22,8 +22,16 @@ import AdminDashboard from "./pages/AdminDashboard";
 import PDFEditor from "./pages/PDFEditor";
 import Explore from "./pages/Explore";
 import Friends from "./pages/Friends";
+import Call from "./pages/Call";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 // Protected route component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -111,6 +119,12 @@ function AppRoutes() {
         <Route path="/video-call" element={
           <ProtectedRoute>
             <VideoCall />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/call" element={
+          <ProtectedRoute>
+            <Call />
           </ProtectedRoute>
         } />
         
