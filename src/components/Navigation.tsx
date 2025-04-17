@@ -18,7 +18,8 @@ import {
   Map,
   Image,
   FileText,
-  Phone
+  Phone,
+  Sparkles
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -45,11 +46,26 @@ export default function Navigation() {
     { path: "/friends", icon: Users, label: "Friends" },
   ];
   
-  // Added quick access feature items for better visibility
+  // Highlight PDF Editor and Generate Image in featured items
   const featuredItems = [
-    { path: "/pdf-editor", icon: FileText, label: "PDF Editor" },
-    { path: "/generate-image", icon: Image, label: "Generate Image" },
-    { path: "/call", icon: Phone, label: "Call" },
+    { 
+      path: "/pdf-editor", 
+      icon: FileText, 
+      label: "PDF Editor",
+      className: "bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-600 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400"
+    },
+    { 
+      path: "/generate-image", 
+      icon: Image, 
+      label: "Generate Image",
+      className: "bg-purple-50 hover:bg-purple-100 border-purple-200 text-purple-600 dark:bg-purple-900/20 dark:border-purple-800 dark:text-purple-400"
+    },
+    { 
+      path: "/call", 
+      icon: Phone, 
+      label: "Call",
+      className: "bg-green-50 hover:bg-green-100 border-green-200 text-green-600 dark:bg-green-900/20 dark:border-green-800 dark:text-green-400"
+    },
   ];
   
   const handleLogout = async () => {
@@ -78,20 +94,32 @@ export default function Navigation() {
   // Group dropdown items for better organization
   const creationItems = [
     { path: "/create-post", icon: PlusSquare, label: "Create Post" },
-    { path: "/generate-image", icon: Image, label: "Generate Image" },
-    { path: "/pdf-editor", icon: FileText, label: "PDF Editor" },
+    { 
+      path: "/generate-image", 
+      icon: Image, 
+      label: "Generate Image", 
+      highlight: true,
+      description: "Create amazing AI-generated images"
+    },
+    { 
+      path: "/pdf-editor", 
+      icon: FileText, 
+      label: "PDF Editor", 
+      highlight: true,
+      description: "Edit and annotate your PDF files"
+    },
   ];
   
   const communicationItems = [
     { path: "/video-call", icon: Video, label: "Video Call" },
     { path: "/location-share", icon: Map, label: "Location Sharing" },
-    { path: "/call", icon: Phone, label: "Call" },
+    { path: "/call", icon: Phone, label: "Call", highlight: true, description: "Call with your phone number" },
   ];
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 md:top-0 md:bottom-auto md:border-b md:border-t-0 dark:bg-gray-900 dark:border-gray-800">
       <div className="container flex items-center justify-between h-16 px-4 mx-auto">
-        <div className="hidden md:flex items-center space-x-1">
+        <div className="hidden md:flex items-center space-x-2">
           <Link to="/" className="flex items-center space-x-2">
             <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -130,8 +158,17 @@ export default function Navigation() {
               key={item.path}
               variant={location.pathname === item.path ? "default" : "outline"}
               size="sm"
-              onClick={() => navigate(item.path)}
-              className="flex items-center gap-1"
+              onClick={() => {
+                toast.success(`Opening ${item.label}`, {
+                  description: `Taking you to ${item.label}`,
+                  icon: "🚀"
+                });
+                navigate(item.path);
+              }}
+              className={cn(
+                "flex items-center gap-1",
+                item.className && location.pathname !== item.path && item.className
+              )}
             >
               <item.icon className="h-4 w-4" />
               <span>{item.label}</span>
@@ -154,9 +191,22 @@ export default function Navigation() {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Create</DropdownMenuLabel>
               {creationItems.map((item) => (
-                <DropdownMenuItem key={item.path} onClick={() => navigate(item.path)}>
-                  <item.icon className="w-4 h-4 mr-2" />
+                <DropdownMenuItem 
+                  key={item.path} 
+                  onClick={() => {
+                    if (item.highlight) {
+                      toast.success(`Opening ${item.label}`, {
+                        description: item.description || `Taking you to ${item.label}`,
+                        icon: "✨"
+                      });
+                    }
+                    navigate(item.path);
+                  }}
+                  className={item.highlight ? "bg-primary/5 font-medium" : ""}
+                >
+                  <item.icon className={cn("w-4 h-4 mr-2", item.highlight && "text-primary")} />
                   <span>{item.label}</span>
+                  {item.highlight && <Sparkles className="w-3 h-3 ml-1 text-yellow-500" />}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
@@ -214,9 +264,22 @@ export default function Navigation() {
               <DropdownMenuLabel>Create</DropdownMenuLabel>
               <DropdownMenuGroup>
                 {creationItems.map((item) => (
-                  <DropdownMenuItem key={item.path} onClick={() => navigate(item.path)}>
-                    <item.icon className="w-4 h-4 mr-2" />
+                  <DropdownMenuItem 
+                    key={item.path} 
+                    onClick={() => {
+                      if (item.highlight) {
+                        toast.success(`Opening ${item.label}`, {
+                          description: item.description || `Taking you to ${item.label}`,
+                          icon: "✨"
+                        });
+                      }
+                      navigate(item.path);
+                    }}
+                    className={item.highlight ? "bg-primary/5 font-medium" : ""}
+                  >
+                    <item.icon className={cn("w-4 h-4 mr-2", item.highlight && "text-primary")} />
                     <span>{item.label}</span>
+                    {item.highlight && <Sparkles className="w-3 h-3 ml-1 text-yellow-500" />}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuGroup>
@@ -227,9 +290,22 @@ export default function Navigation() {
               <DropdownMenuLabel>Connect</DropdownMenuLabel>
               <DropdownMenuGroup>
                 {communicationItems.map((item) => (
-                  <DropdownMenuItem key={item.path} onClick={() => navigate(item.path)}>
-                    <item.icon className="w-4 h-4 mr-2" />
+                  <DropdownMenuItem 
+                    key={item.path} 
+                    onClick={() => {
+                      if (item.highlight) {
+                        toast.success(`Opening ${item.label}`, {
+                          description: item.description || `Taking you to ${item.label}`,
+                          icon: "📱"
+                        });
+                      }
+                      navigate(item.path);
+                    }}
+                    className={item.highlight ? "bg-primary/5 font-medium" : ""}
+                  >
+                    <item.icon className={cn("w-4 h-4 mr-2", item.highlight && "text-primary")} />
                     <span>{item.label}</span>
+                    {item.highlight && <Sparkles className="w-3 h-3 ml-1 text-yellow-500" />}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuGroup>
@@ -266,12 +342,19 @@ export default function Navigation() {
               key={item.path}
               variant="ghost"
               size="sm"
-              onClick={() => navigate(item.path)}
+              onClick={() => {
+                toast.success(`Opening ${item.label}`, {
+                  description: `Taking you to ${item.label}`,
+                  icon: "🚀"
+                });
+                navigate(item.path);
+              }}
               className={cn(
                 "flex flex-col items-center justify-center p-1 rounded-lg transition-colors flex-1",
                 location.pathname === item.path
                   ? "text-primary bg-primary-foreground/10"
-                  : "text-gray-500 hover:text-primary hover:bg-gray-100 dark:hover:bg-gray-800"
+                  : cn("text-gray-500 hover:text-primary hover:bg-gray-100 dark:hover:bg-gray-800", 
+                      item.className && location.pathname !== item.path && item.className)
               )}
             >
               <item.icon className="h-5 w-5 mb-1" />

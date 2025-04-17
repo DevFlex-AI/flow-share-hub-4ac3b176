@@ -45,9 +45,15 @@ type CallHistoryType = {
   duration?: number;
 };
 
+type ActiveCallType = {
+  displayName: string;
+  photoURL?: string;
+  phoneNumber?: string;
+};
+
 const CallPage = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [activeCall, setActiveCall] = useState<{name: string, avatar?: string, phone?: string} | null>(null);
+  const [activeCall, setActiveCall] = useState<ActiveCallType | null>(null);
   const [contacts, setContacts] = useState<ContactType[]>([]);
   const [favoriteContacts, setFavoriteContacts] = useState<ContactType[]>([]);
   const [recentCalls, setRecentCalls] = useState<CallHistoryType[]>([]);
@@ -203,7 +209,11 @@ const CallPage = () => {
     
     // Initiate call UI
     if (type === 'video') {
-      setActiveCall(contact);
+      setActiveCall({
+        displayName: contact.displayName,
+        photoURL: contact.photoURL,
+        phoneNumber: contact.phoneNumber
+      });
     } else {
       // Voice call
       toast.info(`Calling ${contact.displayName}...`, {
