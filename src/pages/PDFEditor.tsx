@@ -38,6 +38,10 @@ const PDFEditor: React.FC = () => {
       const file = e.target.files[0];
       if (file.type === "application/pdf") {
         setPdfFile(file);
+        toast.success("PDF file loaded successfully", {
+          description: "You can now edit text by selecting the text tool",
+          icon: "📄"
+        });
       } else {
         toast.error("Please select a PDF file");
       }
@@ -83,6 +87,16 @@ const PDFEditor: React.FC = () => {
     setShowConverter(true);
   };
 
+  const handleToolClick = (tool: string) => {
+    setActiveTool(tool);
+    if (tool === "text") {
+      toast.info("Text Tool Activated", {
+        description: "Click anywhere on the PDF to add text. Right-click on existing text to delete it.",
+        icon: "🖊️"
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
       <header className="bg-white dark:bg-gray-800 shadow-sm border-b px-4 py-3 flex justify-between items-center">
@@ -117,7 +131,7 @@ const PDFEditor: React.FC = () => {
           <Button
             variant={activeTool === "select" ? "default" : "ghost"}
             size="icon"
-            onClick={() => setActiveTool("select")}
+            onClick={() => handleToolClick("select")}
             className="mb-2"
           >
             <MousePointer className="h-5 w-5" />
@@ -126,8 +140,9 @@ const PDFEditor: React.FC = () => {
           <Button
             variant={activeTool === "text" ? "default" : "ghost"}
             size="icon"
-            onClick={() => setActiveTool("text")}
+            onClick={() => handleToolClick("text")}
             className="mb-2"
+            title="Add or edit text"
           >
             <Type className="h-5 w-5" />
           </Button>
@@ -135,7 +150,7 @@ const PDFEditor: React.FC = () => {
           <Button
             variant={activeTool === "highlight" ? "default" : "ghost"}
             size="icon"
-            onClick={() => setActiveTool("highlight")}
+            onClick={() => handleToolClick("highlight")}
             className="mb-2"
           >
             <Highlighter className="h-5 w-5" />
@@ -144,7 +159,7 @@ const PDFEditor: React.FC = () => {
           <Button
             variant={activeTool === "draw" ? "default" : "ghost"}
             size="icon"
-            onClick={() => setActiveTool("draw")}
+            onClick={() => handleToolClick("draw")}
             className="mb-2"
           >
             <PenTool className="h-5 w-5" />
@@ -153,7 +168,7 @@ const PDFEditor: React.FC = () => {
           <Button
             variant={activeTool === "comment" ? "default" : "ghost"}
             size="icon"
-            onClick={() => setActiveTool("comment")}
+            onClick={() => handleToolClick("comment")}
             className="mb-2"
           >
             <MessageSquare className="h-5 w-5" />
