@@ -1,8 +1,5 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { firestore } from "@/lib/firebase";
-import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,133 +8,56 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Send, ChevronLeft, Phone, Video, MoreVertical, Image as ImageIcon, Smile, MessageCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import { 
+  getUserConversations, 
+  getMessages, 
+  sendMessage, 
+  markMessagesAsRead,
+  Message 
+} from "@/services/messageService";
+import { toast } from "sonner";
 
 export default function Messages() {
   const [conversations, setConversations] = useState<any[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<any | null>(null);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState("");
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("messages");
   const [searchQuery, setSearchQuery] = useState("");
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { currentUser, userProfile } = useAuth();
+  const { currentUser } = useAuth();
 
   // Fetch user conversations
   useEffect(() => {
     if (!currentUser) return;
     
-    const fetchConversations = async () => {
-      try {
-        // In a real app, you would use a "conversations" collection
-        // Here we'll just simulate conversations with other users
-        
-        // For demo, we'll create some fake conversations
-        const demoConversations = [
-          {
-            id: "1",
-            userId: "user1",
-            displayName: "John Doe",
-            photoURL: null,
-            lastMessage: "Hey, how are you?",
-            lastMessageTime: new Date(Date.now() - 1000 * 60 * 5), // 5 minutes ago
-            unreadCount: 2,
-            isOnline: true
-          },
-          {
-            id: "2",
-            userId: "user2",
-            displayName: "Sarah Smith",
-            photoURL: null,
-            lastMessage: "Let's meet tomorrow",
-            lastMessageTime: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
-            unreadCount: 0,
-            isOnline: true
-          },
-          {
-            id: "3",
-            userId: "user3",
-            displayName: "Mike Johnson",
-            photoURL: null,
-            lastMessage: "Did you see my post?",
-            lastMessageTime: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-            unreadCount: 1,
-            isOnline: false
-          }
-        ];
-        
-        setConversations(demoConversations);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching conversations:", error);
-        setLoading(false);
-      }
-    };
-    
-    fetchConversations();
+    const unsubscribe = getUserConversations(currentUser.uid, (fetchedConversations) => {
+      setConversations(fetchedConversations);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, [currentUser]);
 
   // Fetch messages for selected conversation
   useEffect(() => {
     if (!selectedConversation || !currentUser) return;
     
-    const fetchMessages = async () => {
-      try {
-        // In a real app, you would fetch messages from Firestore
-        // For now, we'll simulate messages
-        
-        // For demo, we'll create some fake messages
-        const demoMessages = [
-          {
-            id: "m1",
-            text: "Hey there!",
-            senderId: selectedConversation.userId,
-            createdAt: new Date(Date.now() - 1000 * 60 * 10), // 10 minutes ago
-            read: true
-          },
-          {
-            id: "m2",
-            text: "Hi! How are you?",
-            senderId: currentUser.uid,
-            createdAt: new Date(Date.now() - 1000 * 60 * 9), // 9 minutes ago
-            read: true
-          },
-          {
-            id: "m3",
-            text: "I'm good, thanks for asking. What about you?",
-            senderId: selectedConversation.userId,
-            createdAt: new Date(Date.now() - 1000 * 60 * 8), // 8 minutes ago
-            read: true
-          },
-          {
-            id: "m4",
-            text: "I'm doing well! Just working on a new project.",
-            senderId: currentUser.uid,
-            createdAt: new Date(Date.now() - 1000 * 60 * 7), // 7 minutes ago
-            read: true
-          },
-          {
-            id: "m5",
-            text: "That sounds interesting! What kind of project?",
-            senderId: selectedConversation.userId,
-            createdAt: new Date(Date.now() - 1000 * 60 * 6), // 6 minutes ago
-            read: true
-          }
-        ];
-        
-        setMessages(demoMessages);
-        
-        // Scroll to bottom after messages load
-        setTimeout(() => {
-          scrollToBottom();
-        }, 100);
-      } catch (error) {
-        console.error("Error fetching messages:", error);
-      }
-    };
-    
-    fetchMessages();
+    const unsubscribe = getMessages(selectedConversation.id, (fetchedMessages) => {
+      setMessages(fetchedMessages);
+      
+      // Mark messages as read
+      markMessagesAsRead(selectedConversation.id, currentUser.uid);
+      
+      // Scroll to bottom after messages load
+      setTimeout(() => {
+        scrollToBottom();
+      }, 100);
+    });
+
+    return () => unsubscribe();
   }, [selectedConversation, currentUser]);
 
   // Auto scroll to bottom of messages
@@ -149,49 +69,36 @@ export default function Messages() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!messageText.trim() || !selectedConversation || !currentUser) return;
     
-    // In a real app, you would add the message to Firestore
-    // For now, we'll simulate adding a message
-    
-    const newMessage = {
-      id: `m${messages.length + 1}`,
-      text: messageText,
-      senderId: currentUser.uid,
-      createdAt: new Date(),
-      read: false
-    };
-    
-    setMessages([...messages, newMessage]);
-    setMessageText("");
-    
-    // Update conversation with last message
-    const updatedConversations = conversations.map(conv => {
-      if (conv.id === selectedConversation.id) {
-        return {
-          ...conv,
-          lastMessage: messageText,
-          lastMessageTime: new Date()
-        };
-      }
-      return conv;
-    });
-    
-    setConversations(updatedConversations);
+    try {
+      await sendMessage(
+        currentUser.uid, 
+        selectedConversation.otherUser.id, 
+        messageText
+      );
+      setMessageText("");
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast.error("Failed to send message");
+    }
   };
 
   const filteredConversations = conversations.filter(conv => 
-    conv.displayName.toLowerCase().includes(searchQuery.toLowerCase())
+    conv.otherUser.displayName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const getInitials = (name: string) => {
     return name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : "U";
   };
 
-  const formatMessageTime = (date: Date) => {
+  const formatMessageTime = (timestamp: any) => {
+    if (!timestamp) return "";
+    
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     
@@ -202,6 +109,14 @@ export default function Messages() {
     
     // Otherwise show date
     return date.toLocaleDateString();
+  };
+
+  const getUnreadCount = (conversation: any) => {
+    return messages.filter(msg => 
+      msg.receiverId === currentUser?.uid && 
+      !msg.read && 
+      msg.conversationId === conversation.id
+    ).length;
   };
 
   return (
@@ -229,7 +144,9 @@ export default function Messages() {
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid w-full grid-cols-2 bg-gray-50 dark:bg-gray-800 rounded-none">
                 <TabsTrigger value="messages">Messages</TabsTrigger>
-                <TabsTrigger value="active">Active (3)</TabsTrigger>
+                <TabsTrigger value="active">
+                  Active ({filteredConversations.filter(conv => conv.otherUser.isOnline).length})
+                </TabsTrigger>
               </TabsList>
               
               <TabsContent value="messages" className="m-0">
@@ -251,29 +168,29 @@ export default function Messages() {
                         <div className="flex items-center space-x-3">
                           <div className="relative">
                             <Avatar>
-                              <AvatarImage src={conversation.photoURL} />
-                              <AvatarFallback>{getInitials(conversation.displayName)}</AvatarFallback>
+                              <AvatarImage src={conversation.otherUser.photoURL} />
+                              <AvatarFallback>{getInitials(conversation.otherUser.displayName)}</AvatarFallback>
                             </Avatar>
                             
-                            {conversation.isOnline && (
+                            {conversation.otherUser.isOnline && (
                               <span className="absolute bottom-0 right-0 block w-3 h-3 bg-green-500 rounded-full ring-2 ring-white dark:ring-gray-800"></span>
                             )}
                           </div>
                           
                           <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-center">
-                              <h3 className="font-medium truncate">{conversation.displayName}</h3>
+                              <h3 className="font-medium truncate">{conversation.otherUser.displayName}</h3>
                               <span className="text-xs text-gray-500">
-                                {formatDistanceToNow(conversation.lastMessageTime, { addSuffix: true })}
+                                {conversation.lastMessageTime && formatDistanceToNow(conversation.lastMessageTime.toDate(), { addSuffix: true })}
                               </span>
                             </div>
                             
                             <div className="flex justify-between items-center">
-                              <p className="text-sm text-gray-500 truncate">{conversation.lastMessage}</p>
+                              <p className="text-sm text-gray-500 truncate">{conversation.lastMessage || "No messages yet"}</p>
                               
-                              {conversation.unreadCount > 0 && (
+                              {getUnreadCount(conversation) > 0 && (
                                 <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-medium bg-social-primary text-white rounded-full">
-                                  {conversation.unreadCount}
+                                  {getUnreadCount(conversation)}
                                 </span>
                               )}
                             </div>
@@ -292,7 +209,7 @@ export default function Messages() {
               <TabsContent value="active" className="m-0">
                 <div className="divide-y divide-gray-200 dark:divide-gray-700 overflow-y-auto h-[calc(100vh-280px)]">
                   {filteredConversations
-                    .filter(conv => conv.isOnline)
+                    .filter(conv => conv.otherUser.isOnline)
                     .map((conversation) => (
                       <div 
                         key={conversation.id}
@@ -305,15 +222,15 @@ export default function Messages() {
                         <div className="flex items-center space-x-3">
                           <div className="relative">
                             <Avatar>
-                              <AvatarImage src={conversation.photoURL} />
-                              <AvatarFallback>{getInitials(conversation.displayName)}</AvatarFallback>
+                              <AvatarImage src={conversation.otherUser.photoURL} />
+                              <AvatarFallback>{getInitials(conversation.otherUser.displayName)}</AvatarFallback>
                             </Avatar>
                             
                             <span className="absolute bottom-0 right-0 block w-3 h-3 bg-green-500 rounded-full ring-2 ring-white dark:ring-gray-800"></span>
                           </div>
                           
                           <div>
-                            <h3 className="font-medium">{conversation.displayName}</h3>
+                            <h3 className="font-medium">{conversation.otherUser.displayName}</h3>
                             <p className="text-xs text-green-500">Online</p>
                           </div>
                         </div>
@@ -344,19 +261,19 @@ export default function Messages() {
                     
                     <div className="relative">
                       <Avatar>
-                        <AvatarImage src={selectedConversation.photoURL} />
-                        <AvatarFallback>{getInitials(selectedConversation.displayName)}</AvatarFallback>
+                        <AvatarImage src={selectedConversation.otherUser.photoURL} />
+                        <AvatarFallback>{getInitials(selectedConversation.otherUser.displayName)}</AvatarFallback>
                       </Avatar>
                       
-                      {selectedConversation.isOnline && (
+                      {selectedConversation.otherUser.isOnline && (
                         <span className="absolute bottom-0 right-0 block w-3 h-3 bg-green-500 rounded-full ring-2 ring-white dark:ring-gray-800"></span>
                       )}
                     </div>
                     
                     <div>
-                      <h3 className="font-medium">{selectedConversation.displayName}</h3>
+                      <h3 className="font-medium">{selectedConversation.otherUser.displayName}</h3>
                       <p className="text-xs text-gray-500">
-                        {selectedConversation.isOnline ? (
+                        {selectedConversation.otherUser.isOnline ? (
                           <span className="text-green-500">Online</span>
                         ) : (
                           "Last active recently"
@@ -390,8 +307,8 @@ export default function Messages() {
                       <div className="flex items-end space-x-2">
                         {message.senderId !== currentUser?.uid && (
                           <Avatar className="w-8 h-8">
-                            <AvatarImage src={selectedConversation.photoURL} />
-                            <AvatarFallback>{getInitials(selectedConversation.displayName)}</AvatarFallback>
+                            <AvatarImage src={selectedConversation.otherUser.photoURL} />
+                            <AvatarFallback>{getInitials(selectedConversation.otherUser.displayName)}</AvatarFallback>
                           </Avatar>
                         )}
                         
@@ -448,7 +365,7 @@ export default function Messages() {
                 </div>
                 <h3 className="text-xl font-medium mb-2">Your Messages</h3>
                 <p className="text-gray-500 text-center mb-4">
-                  Send messages and photos to people on SocialConnect
+                  Send messages and photos to people on VortexSocial
                 </p>
                 <Button onClick={() => {}}>Send Message</Button>
               </div>
