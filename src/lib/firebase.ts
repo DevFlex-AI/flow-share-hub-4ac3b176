@@ -1,6 +1,5 @@
-
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, FacebookAuthProvider, OAuthProvider, GithubAuthProvider } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, GithubAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getAnalytics } from "firebase/analytics";
@@ -25,8 +24,6 @@ const storage = getStorage(app);
 
 // Auth providers
 const googleProvider = new GoogleAuthProvider();
-const facebookProvider = new FacebookAuthProvider();
-const appleProvider = new OAuthProvider('apple.com');
 const githubProvider = new GithubAuthProvider();
 
 export { 
@@ -35,8 +32,6 @@ export {
   firestore, 
   storage, 
   googleProvider, 
-  facebookProvider, 
-  appleProvider,
   githubProvider,
   analytics
 };

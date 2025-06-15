@@ -18,7 +18,7 @@ import {
 } from "firebase/auth";
 import { doc, setDoc, getDoc, updateDoc, serverTimestamp, collection, query, where, getDocs, writeBatch } from "firebase/firestore";
 import { ref, deleteObject } from "firebase/storage";
-import { auth, firestore, googleProvider, facebookProvider, appleProvider, storage } from "@/lib/firebase";
+import { auth, firestore, googleProvider, storage } from "@/lib/firebase";
 
 interface AuthContextType {
   currentUser: User | null;
@@ -27,8 +27,6 @@ interface AuthContextType {
   signUp: (email: string, password: string, name: string) => Promise<void>;
   login: (email: string, password: string) => Promise<User>;
   loginWithGoogle: () => Promise<User>;
-  loginWithFacebook: () => Promise<User>;
-  loginWithApple: () => Promise<User>;
   sendVerificationEmail: () => Promise<void>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
@@ -160,64 +158,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         uid: userCredential.user.uid,
         email: userCredential.user.email,
         displayName: userCredential.user.displayName,
-        photoURL: userCredential.user.photoURL,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        isOnline: true,
-        lastActive: serverTimestamp(),
-        bio: "",
-        followers: [],
-        following: [],
-        notifications: true
-      });
-    } else {
-      // Update online status
-      await updateOnlineStatus(true);
-    }
-    
-    return userCredential.user;
-  }
-
-  async function loginWithFacebook() {
-    const userCredential = await signInWithPopup(auth, facebookProvider);
-    
-    // Check if it's a new user
-    const userDoc = await getDoc(doc(firestore, "users", userCredential.user.uid));
-    if (!userDoc.exists()) {
-      // Create user document in Firestore
-      await setDoc(doc(firestore, "users", userCredential.user.uid), {
-        uid: userCredential.user.uid,
-        email: userCredential.user.email,
-        displayName: userCredential.user.displayName,
-        photoURL: userCredential.user.photoURL,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        isOnline: true,
-        lastActive: serverTimestamp(),
-        bio: "",
-        followers: [],
-        following: [],
-        notifications: true
-      });
-    } else {
-      // Update online status
-      await updateOnlineStatus(true);
-    }
-    
-    return userCredential.user;
-  }
-
-  async function loginWithApple() {
-    const userCredential = await signInWithPopup(auth, appleProvider);
-    
-    // Check if it's a new user
-    const userDoc = await getDoc(doc(firestore, "users", userCredential.user.uid));
-    if (!userDoc.exists()) {
-      // Create user document in Firestore
-      await setDoc(doc(firestore, "users", userCredential.user.uid), {
-        uid: userCredential.user.uid,
-        email: userCredential.user.email,
-        displayName: userCredential.user.displayName || "Apple User",
         photoURL: userCredential.user.photoURL,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -374,8 +314,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     login,
     loginWithGoogle,
-    loginWithFacebook,
-    loginWithApple,
     sendVerificationEmail,
     logout,
     resetPassword,

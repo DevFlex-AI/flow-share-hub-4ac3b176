@@ -10,7 +10,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { GoogleLoginButton, FacebookLoginButton, AppleLoginButton, GitHubLoginButton } from "@/components/LoginButtons";
+import { GoogleLoginButton } from "@/components/GoogleLoginButton";
+import { GitHubLoginButton } from "@/components/GitHubLoginButton";
 import { Eye, EyeOff } from "lucide-react";
 
 const Login = () => {
@@ -99,6 +100,10 @@ const Login = () => {
                     <a
                       href="#"
                       className="text-sm text-social-accent hover:underline"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigate("/forgot-password");
+                      }}
                     >
                       Forgot password?
                     </a>
@@ -135,8 +140,6 @@ const Login = () => {
             </TabsContent>
             <TabsContent value="social" className="space-y-4">
               <GoogleLoginButton />
-              <FacebookLoginButton />
-              <AppleLoginButton />
               <GitHubLoginButton />
             </TabsContent>
           </Tabs>
