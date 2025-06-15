@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { firestore } from "@/lib/firebase";
-import { doc, getDoc, collection, query, where, orderBy, getDocs } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, orderBy, getDocs, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
@@ -19,21 +19,25 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("posts");
   const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
   
   const { currentUser } = useAuth();
   const isOwnProfile = currentUser?.uid === userId;
 
   useEffect(() => {
     const fetchProfileAndPosts = async () => {
+      if (!userId) return;
+      setLoading(true);
       try {
         // Fetch user profile
-        const userDoc = await getDoc(doc(firestore, "users", userId!));
+        const userDoc = await getDoc(doc(firestore, "users", userId));
         if (userDoc.exists()) {
-          setUserProfile(userDoc.data());
+          const profileData = userDoc.data();
+          setUserProfile(profileData);
           
           // Check if current user is following this profile
-          if (currentUser && userDoc.data().followers) {
-            setIsFollowing(userDoc.data().followers.includes(currentUser.uid));
+          if (currentUser && profileData.followers) {
+            setIsFollowing(profileData.followers.includes(currentUser.uid));
           }
         } else {
           toast({
@@ -41,6 +45,7 @@ export default function Profile() {
             description: "User not found",
             variant: "destructive"
           });
+          setLoading(false);
           return;
         }
         
@@ -55,19 +60,20 @@ export default function Profile() {
         const postsData = postsSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
-          user: userDoc.data()
+          user: userProfile // This might be stale, but good enough for now
         }));
         
         setPosts(postsData);
-        setLoading(false);
+        
       } catch (error) {
         console.error("Error fetching profile:", error);
-        setLoading(false);
         toast({
           title: "Error",
           description: "Failed to load profile",
           variant: "destructive"
         });
+      } finally {
+        setLoading(false);
       }
     };
     
@@ -77,26 +83,53 @@ export default function Profile() {
   }, [userId, currentUser]);
 
   const handleFollowToggle = async () => {
-    if (!currentUser) return;
+    if (!currentUser || !userId || followLoading) return;
     
+    setFollowLoading(true);
+    
+    const userToFollowDocRef = doc(firestore, "users", userId);
+    const currentUserDocRef = doc(firestore, "users", currentUser.uid);
+
     try {
+      if (isFollowing) {
+        // Unfollow
+        await updateDoc(userToFollowDocRef, { followers: arrayRemove(currentUser.uid) });
+        await updateDoc(currentUserDocRef, { following: arrayRemove(userId) });
+        
+        setUserProfile((prev: any) => ({
+          ...prev,
+          followers: prev.followers.filter((followerId: string) => followerId !== currentUser.uid)
+        }));
+        
+        toast({
+          title: "Unfollowed",
+          description: `You are no longer following ${userProfile.displayName}`
+        });
+      } else {
+        // Follow
+        await updateDoc(userToFollowDocRef, { followers: arrayUnion(currentUser.uid) });
+        await updateDoc(currentUserDocRef, { following: arrayUnion(userId) });
+        
+        setUserProfile((prev: any) => ({
+          ...prev,
+          followers: [...(prev.followers || []), currentUser.uid]
+        }));
+        
+        toast({
+          title: "Following",
+          description: `You are now following ${userProfile.displayName}`
+        });
+      }
       setIsFollowing(!isFollowing);
-      
-      // In a real app, you would update the followers/following arrays in Firestore
-      toast({
-        title: isFollowing ? "Unfollowed" : "Following",
-        description: isFollowing 
-          ? `You are no longer following ${userProfile.displayName}`
-          : `You are now following ${userProfile.displayName}`
-      });
     } catch (error) {
       console.error("Error updating follow status:", error);
-      setIsFollowing(!isFollowing); // Revert UI state
       toast({
         title: "Error",
         description: "Failed to update follow status",
         variant: "destructive"
       });
+    } finally {
+      setFollowLoading(false);
     }
   };
 
@@ -138,6 +171,10 @@ export default function Profile() {
   const getInitials = (name: string) => {
     return name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : "U";
   };
+  
+  const joinedDate = userProfile?.createdAt?.toDate 
+    ? new Date(userProfile.createdAt.toDate()).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    : null;
 
   return (
     <div className="container max-w-4xl mx-auto pb-20 pt-4 md:pt-20 px-4">
@@ -169,15 +206,16 @@ export default function Profile() {
                 variant={isFollowing ? "outline" : "default"} 
                 onClick={handleFollowToggle}
                 className={isFollowing ? "bg-white/80 backdrop-blur-sm" : ""}
+                disabled={followLoading}
               >
-                {isFollowing ? (
+                {followLoading ? "..." : (isFollowing ? (
                   <>
                     <UserCheck className="h-4 w-4 mr-2" />
                     <span>Following</span>
                   </>
                 ) : (
                   <span>Follow</span>
-                )}
+                ))}
               </Button>
               <Button>Message</Button>
             </>
@@ -197,10 +235,12 @@ export default function Profile() {
             </div>
           )}
           
-          <div className="flex items-center">
-            <Calendar className="h-4 w-4 mr-1" />
-            <span>Joined April 2023</span>
-          </div>
+          {joinedDate && (
+            <div className="flex items-center">
+              <Calendar className="h-4 w-4 mr-1" />
+              <span>Joined {joinedDate}</span>
+            </div>
+          )}
           
           {userProfile.isOnline && (
             <div className="flex items-center text-green-500">

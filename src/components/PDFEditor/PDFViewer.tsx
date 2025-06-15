@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
 import { Document, Page, pdfjs, PDFDocumentProxy } from "react-pdf";
 import { toast } from "sonner";
@@ -53,7 +52,7 @@ const PDFViewer = forwardRef<PDFViewerRef, PDFViewerProps>(({ file, activeTool, 
   const containerRef = useRef<HTMLDivElement>(null);
   const pdfWrapperRef = useRef<HTMLDivElement>(null);
 
-  const onDocumentLoadSuccess = async (pdf: PDFDocumentProxy) => {
+  const onDocumentLoadSuccess = async (pdf: any) => {
     setNumPages(pdf.numPages);
     const details = [];
     for (let i = 1; i <= pdf.numPages; i++) {

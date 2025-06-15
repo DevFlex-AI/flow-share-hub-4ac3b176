@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Mic, MicOff, Video as VideoIcon, VideoOff, PhoneOff, Share, Users, MessageSquare } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { firestore } from "@/lib/firebase";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, getDocs } from "firebase/firestore";
 
 // Note: This is a placeholder component. Actual video calls would require WebRTC implementation.
 export default function VideoCall() {
@@ -29,32 +28,20 @@ export default function VideoCall() {
     
     const fetchContacts = async () => {
       try {
-        // In a real app, you would fetch user's contacts from Firestore
-        // For now, we'll simulate contacts
+        const usersCollection = collection(firestore, "users");
+        const usersSnapshot = await getDocs(usersCollection);
+        const usersData = usersSnapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter(user => user.id !== currentUser.uid);
         
-        // For demo, we'll create some fake contacts
-        const demoContacts = [
-          {
-            id: "1",
-            displayName: "John Doe",
-            photoURL: null,
-            isOnline: true
-          },
-          {
-            id: "2",
-            displayName: "Sarah Smith",
-            photoURL: null,
-            isOnline: true
-          },
-          {
-            id: "3",
-            displayName: "Mike Johnson",
-            photoURL: null,
-            isOnline: false
-          }
-        ];
+        // In a real app `isOnline` would come from a presence system (e.g., Firestore Realtime DB)
+        // For demonstration, we'll assign a random online status.
+        const contactsWithStatus = usersData.map(user => ({
+          ...user,
+          isOnline: Math.random() > 0.5,
+        }));
         
-        setContacts(demoContacts);
+        setContacts(contactsWithStatus);
       } catch (error) {
         console.error("Error fetching contacts:", error);
         toast({
