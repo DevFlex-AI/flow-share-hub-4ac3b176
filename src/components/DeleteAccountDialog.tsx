@@ -26,7 +26,7 @@ export default function DeleteAccountDialog() {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   
-  const { currentUser, logout } = useAuth();
+  const { currentUser, logout, deleteUserData } = useAuth();
   const navigate = useNavigate();
 
   const handleDeleteAccount = async () => {
@@ -50,6 +50,9 @@ export default function DeleteAccountDialog() {
       const credential = EmailAuthProvider.credential(currentUser.email, password);
       await reauthenticateWithCredential(currentUser, credential);
       
+      // Delete user data from Firestore and Storage
+      await deleteUserData();
+
       // Delete user from Firebase Auth
       await deleteUser(currentUser);
       

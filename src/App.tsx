@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,6 +8,7 @@ import Navigation from "@/components/Navigation";
 import Index from "./pages/Index";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
+import SignUp from "./pages/SignUp";
 import Profile from "./pages/Profile";
 import Messages from "./pages/Messages";
 import NotFound from "./pages/NotFound";
@@ -79,6 +79,7 @@ function AppRoutes() {
       {currentUser && <Navigation />}
       <Routes>
         <Route path="/login" element={!currentUser ? <Login /> : <Navigate to="/" replace />} />
+        <Route path="/signup" element={!currentUser ? <SignUp /> : <Navigate to="/" replace />} />
         
         <Route path="/" element={
           <ProtectedRoute>

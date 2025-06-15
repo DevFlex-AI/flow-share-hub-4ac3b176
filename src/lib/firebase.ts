@@ -3,20 +3,22 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, FacebookAuthProvider, OAuthProvider, GithubAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
+import { getAnalytics } from "firebase/analytics";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyDJ36ChqE5WKj-peSpU2zU2eLGUQjCZEBQ",
-  authDomain: "firea-9dea6.firebaseapp.com",
-  projectId: "firea-9dea6",
-  storageBucket: "firea-9dea6.firebasestorage.app",
-  messagingSenderId: "517517181708",
-  appId: "1:517517181708:web:b411d32420d9ed42fcff29",
-  measurementId: "G-E3Y8FH0RNQ"
+  apiKey: "AIzaSyAovfTZVrCd61c-0f0jsqm2574vCSFHtPw",
+  authDomain: "my-awsome-app-96444.firebaseapp.com",
+  projectId: "my-awsome-app-96444",
+  storageBucket: "my-awsome-app-96444.firebasestorage.app",
+  messagingSenderId: "819352555411",
+  appId: "1:819352555411:web:0b1da0d54fcdf8b4c32266",
+  measurementId: "G-BG0E3SM48K"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 const auth = getAuth(app);
 const firestore = getFirestore(app);
 const storage = getStorage(app);
@@ -35,5 +37,6 @@ export {
   googleProvider, 
   facebookProvider, 
   appleProvider,
-  githubProvider
+  githubProvider,
+  analytics
 };
