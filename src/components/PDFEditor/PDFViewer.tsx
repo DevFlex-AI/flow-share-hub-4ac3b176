@@ -1,5 +1,6 @@
+
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
-import { Document, Page, pdfjs, PDFDocumentProxy } from "react-pdf";
+import { Document, Page, pdfjs } from "react-pdf";
 import { toast } from "sonner";
 import TextEditor from "./TextEditor";
 import PDFAnnotation from "./PDFAnnotation";
