@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { 
   Bold, Italic, Underline, AlignLeft, AlignCenter, 
@@ -7,6 +6,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { toast } from "sonner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface TextEditorProps {
   position: { x: number; y: number };
@@ -27,6 +27,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
     textAlign: "left",
     color: "#000000",
     backgroundColor: "transparent",
+    fontSize: "16px",
     ...initialStyle
   });
   const editorRef = useRef<HTMLDivElement>(null);
@@ -152,6 +153,20 @@ const TextEditor: React.FC<TextEditorProps> = ({
         >
           <AlignRight className="h-4 w-4" />
         </Button>
+
+        <Select
+          value={style.fontSize as string}
+          onValueChange={(value) => setStyle(prev => ({...prev, fontSize: value}))}
+        >
+          <SelectTrigger className="w-20 h-8">
+            <SelectValue placeholder="Size" />
+          </SelectTrigger>
+          <SelectContent>
+            {['8px', '12px', '16px', '20px', '24px', '32px'].map(size => (
+              <SelectItem key={size} value={size}>{size.replace('px', '')}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         
         <Popover>
           <PopoverTrigger asChild>

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -8,7 +7,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import PDFViewer from "@/components/PDFEditor/PDFViewer";
+import PDFViewer, { PDFViewerRef } from "@/components/PDFEditor/PDFViewer";
 import PDFConverter from "@/components/PDFEditor/PDFConverter";
 import PDFProperties from "@/components/PDFEditor/PDFProperties";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,6 +21,7 @@ const PDFEditor: React.FC = () => {
   const [showConverter, setShowConverter] = useState<boolean>(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pdfViewerRef = useRef<PDFViewerRef>(null);
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
@@ -68,16 +68,32 @@ const PDFEditor: React.FC = () => {
     toast.info("Page addition not implemented in this demo");
   };
 
-  const handleDownload = () => {
-    if (pdfFile) {
-      const url = URL.createObjectURL(pdfFile);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = pdfFile.name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+  const handleDownload = async () => {
+    if (pdfViewerRef.current) {
+      toast.info("Preparing your edited PDF...");
+      const pdfBytes = await pdfViewerRef.current.savePdf();
+      if (pdfBytes && pdfFile) {
+        const blob = new Blob([pdfBytes], { type: "application/pdf" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `edited_${pdfFile.name}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        toast.success("Edited PDF downloaded successfully!");
+      } else if (pdfFile) {
+        // Fallback to download original if saving fails
+        const url = URL.createObjectURL(pdfFile);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = pdfFile.name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
     } else {
       toast.error("No PDF to download");
     }
@@ -221,6 +237,7 @@ const PDFEditor: React.FC = () => {
             
             <TabsContent value="viewer" className="flex-1 overflow-auto p-4">
               <PDFViewer
+                ref={pdfViewerRef}
                 file={pdfFile}
                 activeTool={activeTool}
                 scale={scale}

@@ -1,11 +1,12 @@
 
-import React, { useState, useRef, useEffect } from "react";
-import { Document, Page, pdfjs } from "react-pdf";
+import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
+import { Document, Page, pdfjs, PDFDocumentProxy } from "react-pdf";
 import { toast } from "sonner";
 import TextEditor from "./TextEditor";
 import PDFAnnotation from "./PDFAnnotation";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 import "react-pdf/dist/esm/Page/TextLayer.css";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 
 // Initialize PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
@@ -34,7 +35,11 @@ interface PDFViewerProps {
   scale: number;
 }
 
-const PDFViewer: React.FC<PDFViewerProps> = ({ file, activeTool, scale }) => {
+export interface PDFViewerRef {
+  savePdf: () => Promise<Uint8Array | null>;
+}
+
+const PDFViewer = forwardRef<PDFViewerRef, PDFViewerProps>(({ file, activeTool, scale }, ref) => {
   const [numPages, setNumPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [textEdits, setTextEdits] = useState<TextEdit[]>([]);
@@ -43,14 +48,67 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, activeTool, scale }) => {
   const [textEditorPosition, setTextEditorPosition] = useState<{ x: number; y: number } | null>(null);
   const [editingText, setEditingText] = useState<string>("");
   const [editingStyle, setEditingStyle] = useState<React.CSSProperties>({});
+  const [pageDetails, setPageDetails] = useState<{width: number, height: number}[]>([]);
   
   const containerRef = useRef<HTMLDivElement>(null);
   const pdfWrapperRef = useRef<HTMLDivElement>(null);
 
-  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
-    setNumPages(numPages);
-    toast.success(`Document loaded with ${numPages} pages`);
+  const onDocumentLoadSuccess = async (pdf: PDFDocumentProxy) => {
+    setNumPages(pdf.numPages);
+    const details = [];
+    for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const viewport = page.getViewport({ scale: 1 });
+        details.push({ width: viewport.width, height: viewport.height });
+    }
+    setPageDetails(details);
+    toast.success(`Document loaded with ${pdf.numPages} pages`);
   };
+
+  useImperativeHandle(ref, () => ({
+    savePdf: async () => {
+      if (!file || pageDetails.length === 0) return null;
+
+      try {
+        const pdfBytes = await file.arrayBuffer();
+        const pdfDoc = await PDFDocument.load(pdfBytes);
+        const pages = pdfDoc.getPages();
+        
+        const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+        const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+        for (const edit of textEdits) {
+          const pageIndex = edit.pageNumber - 1;
+          if (pageIndex >= 0 && pageIndex < pages.length) {
+            const page = pages[pageIndex];
+            const pageDetail = pageDetails[pageIndex];
+            
+            const fontSize = parseInt(edit.style.fontSize as string, 10) || 16;
+            const x = edit.position.x / scale;
+            const y = pageDetail.height - (edit.position.y / scale) - (fontSize * 0.75); // Approximation for baseline
+            
+            const colorString = (edit.style.color as string) || '#000000';
+            const r = parseInt(colorString.slice(1, 3), 16) / 255;
+            const g = parseInt(colorString.slice(3, 5), 16) / 255;
+            const b = parseInt(colorString.slice(5, 7), 16) / 255;
+
+            page.drawText(edit.text, {
+              x,
+              y,
+              font: edit.style.fontWeight === 'bold' ? helveticaBoldFont : helveticaFont,
+              size: fontSize,
+              color: rgb(r, g, b),
+            });
+          }
+        }
+        return await pdfDoc.save();
+      } catch (error) {
+        console.error("Error saving PDF:", error);
+        toast.error("Failed to save PDF with edits.");
+        return null;
+      }
+    }
+  }));
 
   const handlePageClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (activeTool === "text" && !editingTextId) {
@@ -219,6 +277,6 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, activeTool, scale }) => {
       )}
     </div>
   );
-};
+});
 
 export default PDFViewer;
