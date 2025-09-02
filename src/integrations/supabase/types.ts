@@ -102,6 +102,174 @@ export type Database = {
           },
         ]
       }
+      calls: {
+        Row: {
+          call_type: string
+          caller_id: string
+          created_at: string
+          duration: number | null
+          ended_at: string | null
+          id: string
+          receiver_id: string
+          started_at: string | null
+          status: string | null
+        }
+        Insert: {
+          call_type?: string
+          caller_id: string
+          created_at?: string
+          duration?: number | null
+          ended_at?: string | null
+          id?: string
+          receiver_id: string
+          started_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          call_type?: string
+          caller_id?: string
+          created_at?: string
+          duration?: number | null
+          ended_at?: string | null
+          id?: string
+          receiver_id?: string
+          started_at?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+      comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          likes_count: number | null
+          parent_comment_id: string | null
+          post_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          likes_count?: number | null
+          parent_comment_id?: string | null
+          post_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          likes_count?: number | null
+          parent_comment_id?: string | null
+          post_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      conversations: {
+        Row: {
+          created_at: string
+          id: string
+          last_message: string | null
+          last_message_sender_id: string | null
+          last_message_time: string | null
+          participant_ids: string[]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          last_message?: string | null
+          last_message_sender_id?: string | null
+          last_message_time?: string | null
+          participant_ids: string[]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_message?: string | null
+          last_message_sender_id?: string | null
+          last_message_time?: string | null
+          participant_ids?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      event_attendees: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      events: {
+        Row: {
+          attendees_count: number | null
+          cover_image_url: string | null
+          created_at: string
+          creator_id: string
+          description: string | null
+          end_time: string | null
+          id: string
+          location: string | null
+          privacy_level: string | null
+          start_time: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          attendees_count?: number | null
+          cover_image_url?: string | null
+          created_at?: string
+          creator_id: string
+          description?: string | null
+          end_time?: string | null
+          id?: string
+          location?: string | null
+          privacy_level?: string | null
+          start_time: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          attendees_count?: number | null
+          cover_image_url?: string | null
+          created_at?: string
+          creator_id?: string
+          description?: string | null
+          end_time?: string | null
+          id?: string
+          location?: string | null
+          privacy_level?: string | null
+          start_time?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       feature_requests: {
         Row: {
           created_at: string
@@ -135,6 +303,273 @@ export type Database = {
           updated_at?: string
           user_id?: string
           votes?: number | null
+        }
+        Relationships: []
+      }
+      group_members: {
+        Row: {
+          group_id: string
+          id: string
+          joined_at: string
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          group_id: string
+          id?: string
+          joined_at?: string
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          group_id?: string
+          id?: string
+          joined_at?: string
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      groups: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string
+          creator_id: string
+          description: string | null
+          id: string
+          is_archived: boolean | null
+          members_count: number | null
+          name: string
+          privacy_level: string | null
+          updated_at: string
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string
+          creator_id: string
+          description?: string | null
+          id?: string
+          is_archived?: boolean | null
+          members_count?: number | null
+          name: string
+          privacy_level?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string
+          creator_id?: string
+          description?: string | null
+          id?: string
+          is_archived?: boolean | null
+          members_count?: number | null
+          name?: string
+          privacy_level?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      likes: {
+        Row: {
+          comment_id: string | null
+          created_at: string
+          id: string
+          post_id: string | null
+          story_id: string | null
+          user_id: string
+        }
+        Insert: {
+          comment_id?: string | null
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          story_id?: string | null
+          user_id: string
+        }
+        Update: {
+          comment_id?: string | null
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          story_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      marketplace_items: {
+        Row: {
+          category: string
+          condition: string | null
+          created_at: string
+          currency: string | null
+          description: string | null
+          id: string
+          images: string[] | null
+          is_available: boolean | null
+          location: string | null
+          price: number | null
+          seller_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          condition?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          images?: string[] | null
+          is_available?: boolean | null
+          location?: string | null
+          price?: number | null
+          seller_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          condition?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          images?: string[] | null
+          is_available?: boolean | null
+          location?: string | null
+          price?: number | null
+          seller_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          is_read: boolean | null
+          media_url: string | null
+          message_type: string | null
+          receiver_id: string
+          sender_id: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          media_url?: string | null
+          message_type?: string | null
+          receiver_id: string
+          sender_id: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          media_url?: string | null
+          message_type?: string | null
+          receiver_id?: string
+          sender_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          data: Json | null
+          id: string
+          is_read: boolean | null
+          message: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      posts: {
+        Row: {
+          activity: string | null
+          comments_count: number | null
+          content: string
+          created_at: string
+          feeling: string | null
+          id: string
+          is_archived: boolean | null
+          likes_count: number | null
+          location: string | null
+          media_type: string | null
+          media_urls: string[] | null
+          privacy_level: string | null
+          shares_count: number | null
+          tagged_users: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity?: string | null
+          comments_count?: number | null
+          content: string
+          created_at?: string
+          feeling?: string | null
+          id?: string
+          is_archived?: boolean | null
+          likes_count?: number | null
+          location?: string | null
+          media_type?: string | null
+          media_urls?: string[] | null
+          privacy_level?: string | null
+          shares_count?: number | null
+          tagged_users?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity?: string | null
+          comments_count?: number | null
+          content?: string
+          created_at?: string
+          feeling?: string | null
+          id?: string
+          is_archived?: boolean | null
+          likes_count?: number | null
+          location?: string | null
+          media_type?: string | null
+          media_urls?: string[] | null
+          privacy_level?: string | null
+          shares_count?: number | null
+          tagged_users?: string[] | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -210,6 +645,45 @@ export type Database = {
           template?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      stories: {
+        Row: {
+          content: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          is_archived: boolean | null
+          media_type: string
+          media_url: string
+          updated_at: string
+          user_id: string
+          views_count: number | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_archived?: boolean | null
+          media_type?: string
+          media_url: string
+          updated_at?: string
+          user_id: string
+          views_count?: number | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_archived?: boolean | null
+          media_type?: string
+          media_url?: string
+          updated_at?: string
+          user_id?: string
+          views_count?: number | null
         }
         Relationships: []
       }
