@@ -4,13 +4,13 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import Navigation from "@/components/Navigation";
+import { AuthProvider, useAuth } from "@/contexts/SupabaseAuthContext";
+import EnhancedNavigation from "@/components/EnhancedNavigation";
 import { SplashScreen } from "@/components/SplashScreen";
 import { useState } from "react";
 import Index from "./pages/Index";
-import Home from "./pages/Home";
-import Login from "./pages/Login";
+import EnhancedHome from "./pages/EnhancedHome";
+import SupabaseLogin from "./pages/SupabaseLogin";
 import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
 import Profile from "./pages/Profile";
@@ -80,15 +80,15 @@ function AppRoutes() {
   
   return (
     <>
-      {currentUser && <Navigation />}
+      {currentUser && <EnhancedNavigation />}
       <Routes>
-        <Route path="/login" element={!currentUser ? <Login /> : <Navigate to="/" replace />} />
+        <Route path="/login" element={!currentUser ? <SupabaseLogin /> : <Navigate to="/" replace />} />
         <Route path="/signup" element={!currentUser ? <SignUp /> : <Navigate to="/" replace />} />
         <Route path="/forgot-password" element={!currentUser ? <ForgotPassword /> : <Navigate to="/" replace />} />
         
         <Route path="/" element={
           <ProtectedRoute>
-            <Home />
+            <EnhancedHome />
           </ProtectedRoute>
         } />
         
