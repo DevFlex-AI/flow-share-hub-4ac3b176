@@ -9,12 +9,13 @@ import EnhancedNavigation from "@/components/EnhancedNavigation";
 import { SplashScreen } from "@/components/SplashScreen";
 import { useState } from "react";
 import Index from "./pages/Index";
+import Landing from "./pages/Landing";
 import EnhancedHome from "./pages/EnhancedHome";
 import SupabaseLogin from "./pages/SupabaseLogin";
 import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
 import Profile from "./pages/Profile";
-import Messages from "./pages/Messages";
+import EnhancedMessages from "./pages/EnhancedMessages";
 import NotFound from "./pages/NotFound";
 import CreatePost from "./pages/CreatePost";
 import VideoCall from "./pages/VideoCall";
@@ -82,11 +83,12 @@ function AppRoutes() {
     <>
       {currentUser && <EnhancedNavigation />}
       <Routes>
-        <Route path="/login" element={!currentUser ? <SupabaseLogin /> : <Navigate to="/" replace />} />
-        <Route path="/signup" element={!currentUser ? <SignUp /> : <Navigate to="/" replace />} />
-        <Route path="/forgot-password" element={!currentUser ? <ForgotPassword /> : <Navigate to="/" replace />} />
+        <Route path="/" element={!currentUser ? <Landing /> : <Navigate to="/home" replace />} />
+        <Route path="/login" element={!currentUser ? <SupabaseLogin /> : <Navigate to="/home" replace />} />
+        <Route path="/signup" element={!currentUser ? <SignUp /> : <Navigate to="/home" replace />} />
+        <Route path="/forgot-password" element={!currentUser ? <ForgotPassword /> : <Navigate to="/home" replace />} />
         
-        <Route path="/" element={
+        <Route path="/home" element={
           <ProtectedRoute>
             <EnhancedHome />
           </ProtectedRoute>
@@ -100,7 +102,7 @@ function AppRoutes() {
         
         <Route path="/messages" element={
           <ProtectedRoute>
-            <Messages />
+            <EnhancedMessages />
           </ProtectedRoute>
         } />
         
